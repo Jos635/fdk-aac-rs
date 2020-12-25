@@ -85,6 +85,7 @@ pub struct EncoderParams {
     pub bit_rate: BitRate,
     pub sample_rate: u32,
     pub transport: Transport,
+    pub channels: Channels,
 }
 
 pub struct Encoder {
@@ -95,6 +96,12 @@ pub struct Encoder {
 pub enum Transport {
     Adts,
     Raw,
+}
+
+#[derive(Debug)]
+pub enum Channels {
+    Mono,
+    Stereo,
 }
 
 #[derive(Debug)]
@@ -136,7 +143,10 @@ impl Encoder {
             check(sys::aacEncoder_SetParam(handle.ptr, sys::AACENC_PARAM_AACENC_SBR_MODE, 0))?;
 
             // hardcode stereo
-            check(sys::aacEncoder_SetParam(handle.ptr, sys::AACENC_PARAM_AACENC_CHANNELMODE, 2))?;
+            check(sys::aacEncoder_SetParam(handle.ptr, sys::AACENC_PARAM_AACENC_CHANNELMODE, match params.channels {
+                Channels::Mono => 1,
+                Channels::Stereo => 2,
+            }))?;
 
             // call encode once with all null params according to docs
             check(sys::aacEncEncode(handle.ptr, ptr::null(), ptr::null(), ptr::null(), ptr::null_mut()))?;
